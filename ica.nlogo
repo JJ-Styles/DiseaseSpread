@@ -5,9 +5,14 @@ globals [
   uninfected-count
 ]
 
+patches-own [
+  infected
+  occupied
+]
+
 to go
   infect
-    tick
+  tick
 end
 
 to setup
@@ -17,22 +22,26 @@ to setup
   set infected-count 0
 
   ask patches [
+    set infected false
+    set occupied false
     set pcolor black
   ]
 
-  while [uninfected-count < (10000 * (population-density / 100))] [
-    ask patches with [(pxcor = (random (max-pxcor + 1))) and (pycor = (random (max-pycor + 1)))] [
-      if (pcolor != uninfected-color) [
-        set pcolor uninfected-color
-        set uninfected-count (uninfected-count + 1)
-      ]
+  let to-occupy ((max-pxcor + 1) * (max-pycor + 1)) * (population-density / 100)
+
+  while [uninfected-count < to-occupy] [
+    ask one-of patches with [occupied = false] [
+      set pcolor uninfected-color
+      set occupied true
+      set uninfected-count (uninfected-count + 1)
     ]
   ]
 
-  ask one-of patches with [pcolor = uninfected-color] [
+  ask one-of patches with [occupied = true] [
     set pcolor infected-color
-        set infected-count (infected-count + 1)
+    set infected true
   ]
+  set infected-count (infected-count + 1)
 
   reset-ticks
 end
@@ -57,8 +66,8 @@ GRAPHICS-WINDOW
 1
 1
 0
-1
-1
+0
+0
 1
 0
 124
@@ -113,7 +122,7 @@ population-density
 population-density
 1
 100
-26.0
+19.0
 1
 1
 NIL
@@ -125,7 +134,7 @@ MONITOR
 139
 187
 Un-Infected
-count patches with [pcolor = uninfected-color]
+count patches with [infected = false]
 17
 1
 11
@@ -136,7 +145,7 @@ MONITOR
 86
 242
 Infected
-count patches with [pcolor = infected-color]
+count patches with [infected = true]
 17
 1
 11
