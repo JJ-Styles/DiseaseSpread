@@ -3,6 +3,8 @@ globals [
   infected-color
   infected-count
   uninfected-count
+  infection-distance
+  pop-size
 ]
 
 patches-own [
@@ -11,7 +13,10 @@ patches-own [
 ]
 
 to go
+  if (infected-count = pop-size) [stop]
+
   infect
+
   tick
 end
 
@@ -20,6 +25,8 @@ to setup
   set infected-color red
   set uninfected-count 0
   set infected-count 0
+  set infection-distance 74
+  set pop-size ((max-pxcor + 1) * (max-pycor + 1)) * (population-density / 100)
 
   ask patches [
     set infected false
@@ -27,9 +34,8 @@ to setup
     set pcolor black
   ]
 
-  let to-occupy ((max-pxcor + 1) * (max-pycor + 1)) * (population-density / 100)
 
-  while [uninfected-count < to-occupy] [
+  while [uninfected-count < pop-size] [
     ask one-of patches with [occupied = false] [
       set pcolor uninfected-color
       set occupied true
@@ -47,15 +53,26 @@ to setup
 end
 
 to infect
-  let rain 0.5
-  let sun 0.5
+  let spread (wind * rain)
+  let duration (temp * uv * humidity)
+  let infectiousness (temp * uv)
+  let infection-rate ((infected-count / (uninfected-count + infected-count)) * 100)
 
+  ask patches with [infected = true] [
+    ask patches in-radius (1 + (round (infection-distance * spread)))  with [infected = false and occupied = true] [
+      if (random 100 < infection-rate * infectiousness) [
+        set pcolor infected-color
+        set infected-count (infected-count + 1)
+        set infected true
+      ]
+    ]
+  ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-210
+242
 10
-1468
+1500
 819
 -1
 -1
@@ -80,10 +97,10 @@ ticks
 30.0
 
 BUTTON
-99
-79
-162
-112
+95
+295
+158
+328
 Go
 go
 T
@@ -97,10 +114,10 @@ NIL
 1
 
 BUTTON
-19
+15
+295
 79
-83
-112
+328
 Setup
 setup
 NIL
@@ -114,41 +131,116 @@ NIL
 1
 
 SLIDER
-20
-33
-192
-66
+13
+30
+185
+63
 population-density
 population-density
 1
 100
-19.0
+1.0
 1
 1
 NIL
 HORIZONTAL
 
 MONITOR
-26
-142
-139
-187
+16
+343
+129
+388
 Un-Infected
-count patches with [infected = false]
+count patches with [occupied = true and infected = false]
 17
 1
 11
 
 MONITOR
-26
-197
-86
-242
+16
+398
+76
+443
 Infected
 count patches with [infected = true]
 17
 1
 11
+
+SLIDER
+13
+71
+199
+104
+Wind
+Wind
+0.1
+1
+0.1
+0.05
+1
+NIL
+HORIZONTAL
+
+SLIDER
+13
+113
+240
+146
+temp
+temp
+0.1
+1
+0.1
+0.05
+1
+NIL
+HORIZONTAL
+
+SLIDER
+13
+156
+185
+189
+humidity
+humidity
+0.1
+1
+0.1
+0.05
+1
+NIL
+HORIZONTAL
+
+SLIDER
+13
+202
+185
+235
+uv
+uv
+0.1
+1
+0.1
+0.05
+1
+NIL
+HORIZONTAL
+
+SLIDER
+13
+244
+185
+277
+rain
+rain
+0.1
+1
+0.1
+0.05
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
