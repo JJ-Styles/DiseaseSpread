@@ -53,9 +53,9 @@ to setup
 end
 
 to infect
-  let spread (wind * rain)
-  let duration (temp * uv * humidity)
-  let infectiousness (temp * uv)
+  let spread (wind * rainfall)
+  let duration (air-temperature * sunshine-duration * relitive-humidity)
+  let infectiousness (air-temperature * sunshine-duration)
   let infection-rate ((infected-count / (uninfected-count + infected-count)) * 100)
 
   ask patches with [infected = true] [
@@ -70,9 +70,9 @@ to infect
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-242
+281
 10
-1500
+1539
 819
 -1
 -1
@@ -185,61 +185,61 @@ HORIZONTAL
 SLIDER
 13
 113
-240
+276
 146
-temp
-temp
-0.1
+air-temperature
+air-temperature
+0
+40
+0.0
 1
-0.1
-0.05
 1
-NIL
+°C
 HORIZONTAL
 
 SLIDER
 13
 156
-185
+275
 189
-humidity
-humidity
-0.1
+relitive-humidity
+relitive-humidity
 1
-0.1
-0.05
+100
+1.0
 1
-NIL
+1
+%
 HORIZONTAL
 
 SLIDER
 13
 202
-185
+198
 235
-uv
-uv
-0.1
+sunshine-duration
+sunshine-duration
+53
+335
+53.0
 1
-0.1
-0.05
 1
-NIL
+Hours
 HORIZONTAL
 
 SLIDER
 13
 244
-185
+242
 277
-rain
-rain
-0.1
+rainfall
+rainfall
 1
-0.1
-0.05
+365
+1.0
 1
-NIL
+1
+Days
 HORIZONTAL
 
 @#$#@#$#@
