@@ -3,43 +3,45 @@ globals [
   infected-color
   infected-count
   uninfected-count
-  infection-distance
   pop-size
+  gravitational-acceleration
+  patch-to-metres
 ]
 
 patches-own [
   infected
   occupied
+  ticks-since-infected
+  immunity
+  projectile-velocity
+  height
 ]
 
 to go
   if (infected-count = pop-size) [stop]
 
-  infect
+  ask patches with [infected = true] [
+    if ticks-since-infected >= 5 [infect self]
+    set ticks-since-infected (ticks-since-infected + 1)
+  ]
 
   tick
 end
 
 to setup
-  set uninfected-color sky
-  set infected-color red
-  set uninfected-count 0
-  set infected-count 0
-  set infection-distance 74
-  set pop-size ((max-pxcor + 1) * (max-pycor + 1)) * (population-density / 100)
 
-  ask patches [
-    set infected false
-    set occupied false
-    set pcolor black
-  ]
+  setup-globals
 
+  let sun normalise-sunshine-duration
 
   while [uninfected-count < pop-size] [
     ask one-of patches with [occupied = false] [
       set pcolor uninfected-color
       set occupied true
       set uninfected-count (uninfected-count + 1)
+      set immunity (sun + random-float (1 - sun)) ;Models deficiency of vitamin D. Randomness accounts for other factors like HIV, smoking
+      set projectile-velocity (15 + random 10) ;allows for different forms of projection
+      set height (163 + random-float 13.51) / 100 ;allows for different heights of a person
     ]
   ]
 
@@ -52,27 +54,70 @@ to setup
   reset-ticks
 end
 
-to infect
-  let spread (wind * rainfall)
-  let duration (air-temperature * sunshine-duration * relitive-humidity)
-  let infectiousness (air-temperature * sunshine-duration)
-  let infection-rate ((infected-count / (uninfected-count + infected-count)) * 100)
+to setup-globals
+  set uninfected-color sky
+  set infected-color red
+  set uninfected-count 0
+  set infected-count 0
+  set pop-size ((max-pxcor + 1) * (max-pycor + 1)) * (population-density / 100)
+  set gravitational-acceleration 9.81
+  set patch-to-metres 1
 
-  ask patches with [infected = true] [
-    ask patches in-radius (1 + (round (infection-distance * spread)))  with [infected = false and occupied = true] [
-      if (random 100 < infection-rate * infectiousness) [
+  ask patches [
+    set infected false
+    set occupied false
+    set ticks-since-infected 0
+    set pcolor black
+  ]
+end
+
+to infect [infected-patch]
+  ;humidity has a inverse effect on tb
+  ;temperature has a inverse effect on tb
+  ;rain has a has inverse effect on tb
+
+  let patches-in-radius patches in-radius infection-distance infected-patch
+  let in-radius-total (count patches-in-radius with [occupied])
+  let in-radius-infected (count patches-in-radius with [infected])
+
+  let infection-rate in-radius-infected / in-radius-total
+
+    ask patches-in-radius with [infected = false and occupied = true] [
+      if (immunity < infection-rate) [
         set pcolor infected-color
         set infected-count (infected-count + 1)
         set infected true
       ]
     ]
-  ]
 end
+
+to-report infection-distance [infected-patch]
+  let h [height] of infected-patch
+  let v [projectile-velocity] of infected-patch
+  let y (2 * h)
+  let z  y / gravitational-acceleration
+  let x sqrt(z)
+  let d (v + average-windspeed) * x
+
+  report d / patch-to-metres
+end
+
+to-report normalise-sunshine-duration
+  let x sunshine-duration - 53
+  let y x / (335 - 53)
+  report y
+end
+
+to-report test
+  let sun normalise-sunshine-duration
+   report (sun * 0.78 + random-float (0.78 - (sun * 0.78))) ;naturally the infection rate of TB is 22%. 0.78 allows for the natural infection of the 22%. 0.7 randomness allows
+end
+
 @#$#@#$#@
 GRAPHICS-WINDOW
-281
+322
 10
-1539
+1580
 819
 -1
 -1
@@ -139,7 +184,7 @@ population-density
 population-density
 1
 100
-1.0
+39.0
 1
 1
 NIL
@@ -170,16 +215,16 @@ count patches with [infected = true]
 SLIDER
 13
 71
-199
+315
 104
-Wind
-Wind
-0.1
+average-windspeed
+average-windspeed
+0
+103
+35.0
 1
-0.1
-0.05
 1
-NIL
+m/s
 HORIZONTAL
 
 SLIDER
@@ -191,7 +236,7 @@ air-temperature
 air-temperature
 0
 40
-0.0
+32.0
 1
 1
 °C
@@ -202,11 +247,11 @@ SLIDER
 156
 275
 189
-relitive-humidity
-relitive-humidity
+relative-humidity
+relative-humidity
 1
 100
-1.0
+45.0
 1
 1
 %
@@ -221,7 +266,7 @@ sunshine-duration
 sunshine-duration
 53
 335
-53.0
+335.0
 1
 1
 Hours
@@ -236,11 +281,22 @@ rainfall
 rainfall
 1
 365
-1.0
+215.0
 1
 1
 Days
 HORIZONTAL
+
+MONITOR
+10
+478
+179
+523
+NIL
+test
+3
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
