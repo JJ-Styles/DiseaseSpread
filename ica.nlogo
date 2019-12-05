@@ -6,6 +6,7 @@ globals [
   pop-size
   gravitational-acceleration
   patch-to-metres
+  droplet-infectiousness ;infectiousness of a droplet is probability that that one droplet would infect.
 ]
 
 patches-own [
@@ -15,16 +16,35 @@ patches-own [
   immunity
   projectile-velocity
   height
+  sneeze-tick
+  cough-tick
+  num-droplets
 ]
 
+  ;every 28,800 ticks is a day.
+  ;every 7200 ticks you sneeze.
+  ;every 2618 ticks you cough.
 to go
   if (infected-count = pop-size) [stop]
 
-  ask patches with [infected = true] [
-    if ticks-since-infected >= 5 [infect self]
-    set ticks-since-infected (ticks-since-infected + 1)
-  ]
+  ask patches [
+    if ticks = sneeze-tick [
+      sneeze self
+      set sneeze-tick (ticks + random 7200)
+    ]
+    if ticks = cough-tick [
+      cough self
+      set cough-tick (ticks + random 2618)
+    ]
 
+    if infected
+    [
+      ifelse ticks-since-infected >= 5
+        [infect self]
+        [set ticks-since-infected (ticks-since-infected + 1)]
+    ]
+    set num-droplets 0
+  ]
   tick
 end
 
@@ -39,16 +59,22 @@ to setup
       set pcolor uninfected-color
       set occupied true
       set uninfected-count (uninfected-count + 1)
-      set immunity (sun + random-float (1 - sun)) ;Models deficiency of vitamin D. Randomness accounts for other factors like HIV, smoking
-      set projectile-velocity (15 + random 10) ;allows for different forms of projection
+      set immunity (sun * random-float 0.78) + random-float (0.78 - (sun * 0.78)) ;Models deficiency of vitamin D. Randomness accounts for other factors like HIV, smoking
+      set projectile-velocity (15 + random 11) ;allows for different forms of projection
       set height (163 + random-float 13.51) / 100 ;allows for different heights of a person
+      set sneeze-tick (random 7200) ;average person sneezes roughly 4 times a day
+      set cough-tick (random 2618) ;average person coughs roughly 11 times a day
     ]
   ]
 
-  ask one-of patches with [occupied = true] [
+  ask patch 62 39 [
     set pcolor infected-color
     set infected true
   ]
+  ;ask one-of patches with [occupied = true] [
+   ; set pcolor infected-color
+    ;set infected true
+  ;]
   set infected-count (infected-count + 1)
 
   reset-ticks
@@ -62,6 +88,7 @@ to setup-globals
   set pop-size ((max-pxcor + 1) * (max-pycor + 1)) * (population-density / 100)
   set gravitational-acceleration 9.81
   set patch-to-metres 1
+  set droplet-infectiousness 0.1
 
   ask patches [
     set infected false
@@ -80,7 +107,12 @@ to infect [infected-patch]
   let in-radius-total (count patches-in-radius with [occupied])
   let in-radius-infected (count patches-in-radius with [infected])
 
+  ;infectiousness of a person (patch) -> dependant on no. of droplets, rain, humidity, temperature & infectiousness of a droplet
+  let person-infectiousness ([num-droplets] of infected-patch * droplet-infectiousness)
+
   let infection-rate in-radius-infected / in-radius-total
+
+  let potential-infection-per-person (person-infectiousness / in-radius-total)   ;max 70. min 2
 
     ask patches-in-radius with [infected = false and occupied = true] [
       if (immunity < infection-rate) [
@@ -91,15 +123,32 @@ to infect [infected-patch]
     ]
 end
 
+to sneeze [person]
+  if [infected] of person
+  ;and ticks-since-infected >= 5
+  [
+    set num-droplets (25000 + random 5000)
+  ]
+end
+
+to cough [person]
+  if [infected] of person
+  ;and ticks-since-infected >= 5
+  [
+    set num-droplets ( 2000 + random 1000)
+  ]
+end
+
 to-report infection-distance [infected-patch]
   let h [height] of infected-patch
   let v [projectile-velocity] of infected-patch
   let y (2 * h)
   let z  y / gravitational-acceleration
   let x sqrt(z)
-  let d (v + average-windspeed) * x
+  let d (v + (average-windspeed / 6)) * x
+  let r d / 2
 
-  report d / patch-to-metres
+  report r / patch-to-metres
 end
 
 to-report normalise-sunshine-duration
@@ -110,9 +159,41 @@ end
 
 to-report test
   let sun normalise-sunshine-duration
-   report (sun * 0.78 + random-float (0.78 - (sun * 0.78))) ;naturally the infection rate of TB is 22%. 0.78 allows for the natural infection of the 22%. 0.7 randomness allows
+   report (sun * random-float 0.78) + random-float (0.78 - (sun * 0.78)) ;naturally the infection rate of TB is 22%. 0.78 allows for the natural infection of the 22%. 0.7 randomness allows
 end
 
+to-report test1
+  let x 0
+
+  ask one-of patches with [infected]
+  [
+    cough self
+
+    let patches-in-radius patches in-radius infection-distance self
+    let in-radius-total (count patches-in-radius with [occupied])
+    let in-radius-infected (count patches-in-radius with [infected])
+    let patches-to-infect in-radius-total
+    let infection-rate in-radius-infected / in-radius-total
+
+    let num-droplets-per-patch (num-droplets / (count patches-in-radius))   ;max 30000. min 3.952. this is the number of droplets per patch
+    let infectiousness-per-patch (num-droplets-per-patch * droplet-infectiousness) ;max 49.18 (ish) min 0.396 (ish)
+
+    ;while [patches-to-infect > 0] [
+     ; ask patches-in-radius with [infected = false and occupied] [
+      ;  if (immunity < infectiousness-per-patch) [
+       ;   set pcolor infected-color
+        ;  set infected-count (infected-count + 1)
+         ; set infected true
+          ;set patches-to-infect (patches-to-infect - 1)
+        ;]
+      ;]
+    ;]
+
+     set x infectiousness-per-patch
+  ]
+
+  report x
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 322
@@ -184,7 +265,7 @@ population-density
 population-density
 1
 100
-39.0
+100.0
 1
 1
 NIL
@@ -221,7 +302,7 @@ average-windspeed
 average-windspeed
 0
 103
-35.0
+103.0
 1
 1
 m/s
@@ -236,7 +317,7 @@ air-temperature
 air-temperature
 0
 40
-32.0
+13.0
 1
 1
 °C
@@ -288,13 +369,24 @@ Days
 HORIZONTAL
 
 MONITOR
-10
-478
-179
-523
+16
+484
+185
+529
 NIL
 test
 3
+1
+11
+
+MONITOR
+15
+549
+162
+594
+NIL
+test1
+17
 1
 11
 
