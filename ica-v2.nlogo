@@ -129,12 +129,13 @@ to infect-people [host]
       infectiousness-per-patch >= 0.6 and infectiousness-per-patch < 0.8 [ 14 ]
       infectiousness-per-patch >= 0.4 and infectiousness-per-patch < 0.6 [ 13 ]
       infectiousness-per-patch >= 0.2 and infectiousness-per-patch < 0.4 [ 12 ]
-      [ 11 ])
+      infectiousness-per-patch > 0 and infectiousness-per-patch < 0.2 [ 12 ]
+      [ 10 ])
 
     ask patches-in-radius [
       set pcolor infection-colour ;visualise the cone where other people can be infected
       ask uninfected-here [
-        ;if (immunity < infectiousness-per-patch) [
+        if (immunity < infectiousness-per-patch) [
           set breed infected
           set shape "person"
           set color infected-color
@@ -143,7 +144,7 @@ to infect-people [host]
           set sneeze-tick (ticks + random 7200) ;average person sneezes roughly 4 times a day
           set cough-tick (ticks + random 2618) ;average person coughs roughly 11 times a day
           set ticks-since-infected 0
-        ;]
+        ]
       ]
     ]
   ]
