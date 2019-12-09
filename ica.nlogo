@@ -13,12 +13,12 @@ patches-own [
   infected
   occupied
   ticks-since-infected
-  immunity
   projectile-velocity
   height
   sneeze-tick
   cough-tick
   num-droplets
+  immunity
 ]
 
   ;every 28,800 ticks is a day.
@@ -332,7 +332,7 @@ relative-humidity
 relative-humidity
 1
 100
-45.0
+70.0
 1
 1
 %
@@ -732,7 +732,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.0.1
+NetLogo 6.1.1
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
