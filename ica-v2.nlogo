@@ -50,30 +50,25 @@ to setup
   create-uninfected number-of-uninfected [
     setxy random-xcor random-ycor
     set color uninfected-color
+    set shape "person"
     set immunity (sun * random-float 0.78) + random-float (0.78 - (sun * 0.78)) ;Models deficiency of vitamin D. Randomness accounts for other factors like HIV, smoking
   ]
   create-infected number-of-infected [
     setxy random-xcor random-ycor
-    set color infected-color
-    set projectile-velocity (15 + random 11) ;allows for different forms of projection
-    set height (163 + random-float 13.51) / 100 ;allows for different heights of a person
-    set sneeze-tick (random 7200) ;average person sneezes roughly 4 times a day
-    set cough-tick (random 2618) ;average person coughs roughly 11 times a day
-    set ticks-since-infected 0
-  ]
-
-  ask turtles [
-    set shape "person"
+    infect self 0
   ]
 
   reset-ticks
 end
 
+  ; 1 tick = 1 second
+  ;sleep is = to 8 hours
+  ;therefore 1 day = 16 hours
   ;every 28,800 ticks is a day.
   ;every 7200 ticks you sneeze.
   ;every 2618 ticks you cough.
 to go
-  ;ask patches [ set pcolor black ]
+  ask patches [ set pcolor black ]
   ask turtles [
     if (breed = infected)
       [
@@ -88,10 +83,11 @@ to go
         ]
 
         ifelse ticks-since-infected >= 5
-        [infect-people self]
-        [set ticks-since-infected (ticks-since-infected + 1)]
+          [infect-people self]
+          [set ticks-since-infected (ticks-since-infected + 1)]
 
         set num-droplets 0
+        set projectile-velocity 0
     ]
     move-person self
   ]
@@ -118,37 +114,38 @@ end
 
 to infect-people [host]
   ask host [
-    let patches-in-radius patches in-cone (infection-distance self) infection-cone-angle
-    let num-droplets-per-patch (num-droplets / (count patches-in-radius))
-    let infectiousness-per-patch (num-droplets-per-patch * droplet-infectiousness)
+    let patches-in-radius patches in-cone (infection-distance self) infection-cone-angle ;range between 1 and 7
+    let num-droplets-per-patch 50 ;talking and breathing produce a very low droplet count just infront of them
+    let num-patches count patches-in-radius
+    let modifier (normalise-air-temperature + normalise-rainfall + normalise-relative-humidity) / 3
 
-    set infectiousness-per-patch (normalise-infectiousness-per-patch infectiousness-per-patch)
+    if (num-patches = 0) [set num-patches 1]
+    if (num-droplets != 0) [set num-droplets-per-patch (num-droplets / num-patches)]
 
-    ;let infection-colour (ifelse-value
-     ; infectiousness-per-patch >= 0.8 [ 15 ]
-      ;infectiousness-per-patch >= 0.6 and infectiousness-per-patch < 0.8 [ 14 ]
-      ;infectiousness-per-patch >= 0.4 and infectiousness-per-patch < 0.6 [ 13 ]
-      ;infectiousness-per-patch >= 0.2 and infectiousness-per-patch < 0.4 [ 12 ]
-      ;infectiousness-per-patch > 0 and infectiousness-per-patch < 0.2 [ 11 ]
-      ;[ 10 ])
+    let infectiousness-per-patch normalise-infectiousness-per-patch (num-droplets-per-patch * droplet-infectiousness)
 
     let infection-colour (floor (10 + (infectiousness-per-patch * 5)))
 
     ask patches-in-radius [
-      set pcolor infection-colour ;visualise the cone where other people can be infected
+      set pcolor infection-colour ;infection-colour ;visualise the cone where other people can be infected
       ask uninfected-here [
-        ;if (immunity < infectiousness-per-patch) [
-          set breed infected
-          set shape "person"
-          set color infected-color
-          set projectile-velocity (15 + random 11) ;allows for different forms of projection
-          set height (163 + random-float 13.51) / 100 ;allows for different heights of a person
-          set sneeze-tick (ticks + random 7200) ;average person sneezes roughly 4 times a day
-          set cough-tick (ticks + random 2618) ;average person coughs roughly 11 times a day
-          set ticks-since-infected 0
-        ;]
+        if (immunity < (infectiousness-per-patch * ((modifier * 0.9) + 0.1))) [
+          infect self ticks
+        ]
       ]
     ]
+  ]
+end
+
+to infect [target t]
+  ask target [
+    set breed infected
+    set shape "person"
+    set color infected-color
+    set height (163 + random-float 13.51) / 100 ;allows for different heights of a person
+    set sneeze-tick (t + random 169) ;average person sneezes roughly 4 times a day, a person with tb is more likely to sneeze
+    set cough-tick (t + random 60) ;average person coughs roughly 11 times a day, a person with tb is more likely to cough
+    set ticks-since-infected 0
   ]
 end
 
@@ -178,28 +175,31 @@ end
 to sneeze [person]
   if ticks-since-infected >= 5
   [
-    set num-droplets (25000 + random 5000)
-    ;set projectile-velocity
+    set num-droplets (300 + random 300)
+    set projectile-velocity 4.5
   ]
 end
 
 to cough [person]
   if ticks-since-infected >= 5
   [
-    set num-droplets (num-droplets + 2000 + random 1000)
+    set num-droplets (400 + random 200)
+    set projectile-velocity 5
   ]
 end
 
-to-report infection-distance [infected-patch]
-  let h [height] of infected-patch
-  let v [projectile-velocity] of infected-patch
+to-report infection-distance [person]
+  let h [height] of person
+  let v [projectile-velocity] of person
+
+  if v = 0 [report 1]
+
   let y (2 * h)
   let z  y / gravitational-acceleration
   let x sqrt(z)
   let d (v + (average-windspeed / 6)) * x
-  let r d / 2
 
-  report r / patch-to-metres
+  report ceiling (d / patch-to-metres)
 end
 
 to-report normalise-sunshine-duration
@@ -217,16 +217,21 @@ end
 
 to-report normalise-infectiousness-per-patch [x]
   let y x
-  ;do some maths
-  report random-float 1 ;y
+  set y ((-1 / 900) * ((x - 30) ^ 2) + 1)
+  report y
 end
 
 to-report normalise-rainfall
-  report rainfall / 365
+  report 1 - (rainfall / 365)
 end
 
 to-report normalise-air-temperature
-  report air-temperature / 40
+  let y (-1 / 25) * ((air-temperature - 5) ^ 2) + 50
+  report y / 50
+end
+
+to-report normalise-relative-humidity
+  report 1 - (relative-humidity / 100)
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -254,7 +259,7 @@ GRAPHICS-WINDOW
 1
 1
 ticks
-30.0
+80.0
 
 SLIDER
 6
@@ -263,9 +268,9 @@ SLIDER
 43
 number-of-uninfected
 number-of-uninfected
-2
 100
-100.0
+3000
+1513.0
 1
 1
 NIL
@@ -312,7 +317,7 @@ SLIDER
 85
 number-of-infected
 number-of-infected
-0
+1
 10
 1.0
 1
@@ -351,7 +356,7 @@ average-windspeed
 average-windspeed
 0
 103
-1.0
+0.0
 1
 1
 m/s
@@ -366,7 +371,7 @@ air-temperature
 air-temperature
 0
 40
-12.0
+5.0
 1
 1
 °C
@@ -381,7 +386,7 @@ relative-humidity
 relative-humidity
 0
 100
-1.0
+0.0
 1
 1
 %
@@ -434,6 +439,39 @@ false
 "" ""
 PENS
 "default" 1.0 0 -2674135 true "" "plot get-infection-rate"
+
+MONITOR
+12
+391
+175
+436
+infectiousness of breathing
+normalise-infectiousness-per-patch 2.5
+17
+1
+11
+
+MONITOR
+13
+444
+71
+489
+modifier
+((((normalise-air-temperature + normalise-rainfall + normalise-relative-humidity) / 3)) * 0.9) + 0.1
+17
+1
+11
+
+MONITOR
+15
+507
+99
+552
+infectiousness
+(normalise-infectiousness-per-patch 30) * (((((normalise-air-temperature + normalise-rainfall + normalise-relative-humidity) / 3)) * 0.9) + 0.1)
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
