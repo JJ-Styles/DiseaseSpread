@@ -73,7 +73,7 @@ end
   ;every 7200 ticks you sneeze.
   ;every 2618 ticks you cough.
 to go
-  ask patches [ set pcolor black ]
+  ;ask patches [ set pcolor black ]
   ask turtles [
     if (breed = infected)
       [
@@ -124,18 +124,20 @@ to infect-people [host]
 
     set infectiousness-per-patch (normalise-infectiousness-per-patch infectiousness-per-patch)
 
-    let infection-colour (ifelse-value
-      infectiousness-per-patch >= 0.8 [ 15 ]
-      infectiousness-per-patch >= 0.6 and infectiousness-per-patch < 0.8 [ 14 ]
-      infectiousness-per-patch >= 0.4 and infectiousness-per-patch < 0.6 [ 13 ]
-      infectiousness-per-patch >= 0.2 and infectiousness-per-patch < 0.4 [ 12 ]
-      infectiousness-per-patch > 0 and infectiousness-per-patch < 0.2 [ 12 ]
-      [ 10 ])
+    ;let infection-colour (ifelse-value
+     ; infectiousness-per-patch >= 0.8 [ 15 ]
+      ;infectiousness-per-patch >= 0.6 and infectiousness-per-patch < 0.8 [ 14 ]
+      ;infectiousness-per-patch >= 0.4 and infectiousness-per-patch < 0.6 [ 13 ]
+      ;infectiousness-per-patch >= 0.2 and infectiousness-per-patch < 0.4 [ 12 ]
+      ;infectiousness-per-patch > 0 and infectiousness-per-patch < 0.2 [ 11 ]
+      ;[ 10 ])
+
+    let infection-colour (floor (10 + (infectiousness-per-patch * 5)))
 
     ask patches-in-radius [
       set pcolor infection-colour ;visualise the cone where other people can be infected
       ask uninfected-here [
-        if (immunity < infectiousness-per-patch) [
+        ;if (immunity < infectiousness-per-patch) [
           set breed infected
           set shape "person"
           set color infected-color
@@ -144,7 +146,7 @@ to infect-people [host]
           set sneeze-tick (ticks + random 7200) ;average person sneezes roughly 4 times a day
           set cough-tick (ticks + random 2618) ;average person coughs roughly 11 times a day
           set ticks-since-infected 0
-        ]
+        ;]
       ]
     ]
   ]
@@ -177,6 +179,7 @@ to sneeze [person]
   if ticks-since-infected >= 5
   [
     set num-droplets (25000 + random 5000)
+    ;set projectile-velocity
   ]
 end
 
@@ -215,7 +218,7 @@ end
 to-report normalise-infectiousness-per-patch [x]
   let y x
   ;do some maths
-  report y
+  report random-float 1 ;y
 end
 
 to-report normalise-rainfall
@@ -774,7 +777,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.1.1
+NetLogo 6.0.1
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
