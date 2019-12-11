@@ -148,6 +148,9 @@ to transmit-disease [host]
     set pcolor floor ((infected-color - 4) + infectiousness-per-patch * 4) ; Visualise the cone in which other people can be infected by the given host
     ask uninfected-here [
       let p infectiousness-per-patch * (modifier * 0.9 + 0.1)
+      if (p < 0) [
+        show num-droplets-per-patch * droplet-infectiousness
+      ]
       set averages (lput p averages)
       if (immunity < p) [
         transmit self
@@ -456,7 +459,7 @@ air-temperature
 air-temperature
 0
 40
-0.0
+40.0
 1
 1
 °C
@@ -501,7 +504,7 @@ rainfall
 rainfall
 1
 365
-1.0
+365.0
 1
 1
 Days
@@ -559,10 +562,10 @@ infectiousness
 11
 
 MONITOR
-1221
-269
-1367
-314
+966
+258
+1112
+303
 NIL
 mean-immunity
 17
@@ -570,10 +573,10 @@ mean-immunity
 11
 
 MONITOR
-1221
-323
-1367
-368
+966
+312
+1112
+357
 NIL
 lowest-immunity
 17
@@ -581,10 +584,10 @@ lowest-immunity
 11
 
 PLOT
-968
-232
-1213
-408
+1122
+205
+1608
+412
 Immunity
 Time
 Immunity
@@ -599,12 +602,13 @@ PENS
 "mean" 1.0 0 -16777216 true "" "plot mean-immunity"
 "min" 1.0 0 -7500403 true "" "plot lowest-immunity"
 "max" 1.0 0 -2674135 true "" "plot highest-immunity"
+"standard-deviation" 1.0 0 -955883 true "" "plot immunity-standard-deviation"
 
 MONITOR
-1221
-378
-1367
-423
+966
+367
+1112
+412
 NIL
 highest-immunity
 17
@@ -612,10 +616,10 @@ highest-immunity
 11
 
 MONITOR
-1221
-216
-1366
-261
+966
+205
+1111
+250
 NIL
 immunity-standard-deviation
 17
@@ -634,10 +638,10 @@ count passive-infected
 11
 
 MONITOR
-1222
-439
-1369
-484
+965
+424
+1112
+469
 NIL
 mean-probs
 17
@@ -645,28 +649,31 @@ mean-probs
 11
 
 PLOT
-966
-459
-1212
-635
+1123
+425
+1609
+627
 Probability
-NIL
-NIL
+Time
+Probability
 0.0
 0.0
 0.0
 1.0
 true
-false
+true
 "" ""
 PENS
-"mean-p" 1.0 0 -16777216 true "" "plot mean-probs"
+"mean" 1.0 0 -16777216 true "" "plot mean-probs"
+"min" 1.0 0 -7500403 true "" "plot min averages"
+"max" 1.0 0 -2674135 true "" "plot max averages"
+"standard-deviation" 1.0 0 -955883 true "" "plot probs-standard-deviation"
 
 MONITOR
-1223
-492
-1370
-537
+966
+477
+1113
+522
 NIL
 min averages
 17
@@ -674,10 +681,10 @@ min averages
 11
 
 MONITOR
-1223
-545
-1369
-590
+966
+530
+1112
+575
 NIL
 max averages
 17
@@ -685,10 +692,10 @@ max averages
 11
 
 MONITOR
-1223
-598
-1370
-643
+966
+583
+1113
+628
 NIL
 probs-standard-deviation
 17
