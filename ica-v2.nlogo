@@ -23,7 +23,7 @@ globals [
   person-step-size
   infection-cone-angle
   movement-boundary-lookahead-size
-  droplet-infectiousness ;infectiousness of a droplet is probability that that one droplet would infect.
+  droplet-infectiousness ; Infectiousness of a droplet is probability that that one droplet would infect.
   gravitational-acceleration
   patch-to-metres
 ]
@@ -32,11 +32,11 @@ to setup-globals
   set centre-patch patch (max-pxcor / 2) (max-pycor / 2)
   set infected-color red
   set uninfected-color blue
-  set random-direction-angle 90
+  set random-direction-angle 45
   set direction-change-tick 100
   set person-step-size 0.1
   set infection-cone-angle 90
-  set movement-boundary-lookahead-size 7
+  set movement-boundary-lookahead-size 5
   set gravitational-acceleration 9.81
   set patch-to-metres 2
   set droplet-infectiousness 0.1
@@ -51,7 +51,8 @@ to setup
     setxy random-xcor random-ycor
     set color uninfected-color
     set shape "person"
-    set immunity (sun * random-float 0.78) + random-float (0.78 - (sun * 0.78)) ;Models deficiency of vitamin D. Randomness accounts for other factors like HIV, smoking
+    let s abs (random-normal (sun / 2) 0.1)
+    set immunity 0.1 + (s * 0.3) + (random-float 0.4); Models deficiency of vitamin D. Randomness accounts for other factors like HIV, smoking
   ]
   create-infected number-of-infected [
     setxy random-xcor random-ycor
@@ -61,14 +62,14 @@ to setup
   reset-ticks
 end
 
-  ; 1 tick = 1 second
-  ;sleep is = to 8 hours
-  ;therefore 1 day = 16 hours
-  ;every 28,800 ticks is a day.
-  ;every 7200 ticks you sneeze.
-  ;every 2618 ticks you cough.
+; 1 tick = 1 second
+; sleep is = to 8 hours
+; therefore 1 day = 16 hours
+; every 28,800 ticks is a day.
+; every 7200 ticks you sneeze.
+; every 2618 ticks you cough.
 to go
-  ask patches [ set pcolor black ]
+  ask patches [set pcolor black]
   ask turtles [
     if (breed = infected)
       [
@@ -95,39 +96,49 @@ to go
   tick
 end
 
-to move-person [person]
-  ask person [
-    let distance-to-edge (get-distance-to-edge self)
-    let degree-multiplier 0
-    if distance-to-edge > 0 [ set degree-multiplier 1 / distance-to-edge ]
+to-report average-immunity
+  let ai 0
 
-    if ticks mod (1 + random direction-change-tick) = 0
-      [ set heading heading + (random random-direction-angle) - (random random-direction-angle) ]
-
-    ifelse (relative-heading self) < 0
-      [ set heading (heading - (359 - heading) * degree-multiplier) ]
-      [ set heading (heading + (heading - 1) * degree-multiplier) ]
-
-    forward person-step-size
+  ask uninfected [
+    set ai (ai + immunity)
   ]
+
+  report ai / (count uninfected)
 end
 
+to-report lowest-immunity
+  let li 1.1
+  ask uninfected [
+    if immunity < li [set li immunity]
+  ]
+  report li
+end
+
+to-report highest-immunity
+  let hi -1
+  ask uninfected [
+    if immunity > hi [set hi immunity]
+  ]
+  report hi
+end
+
+;
 to infect-people [host]
   ask host [
-    let patches-in-radius patches in-cone (infection-distance self) infection-cone-angle ;range between 1 and 7
-    let num-droplets-per-patch 50 ;talking and breathing produce a very low droplet count just infront of them
-    let num-patches count patches-in-radius
     let modifier (normalise-air-temperature + normalise-rainfall + normalise-relative-humidity) / 3
 
+    let patches-in-radius patches in-cone (infection-distance self) infection-cone-angle ; Range between 1 and 7
+    let num-droplets-per-patch 50 ; Default value for talking and breathing; produces a very low droplet count just infront of them
+    let num-patches count patches-in-radius
     if (num-patches = 0) [set num-patches 1]
     if (num-droplets != 0) [set num-droplets-per-patch (num-droplets / num-patches)]
 
     let infectiousness-per-patch normalise-infectiousness-per-patch (num-droplets-per-patch * droplet-infectiousness)
 
-    let infection-colour (floor (10 + (infectiousness-per-patch * 5)))
+    let infection-color (floor (10 + (infectiousness-per-patch * 5)))
 
     ask patches-in-radius [
-      set pcolor infection-colour ;infection-colour ;visualise the cone where other people can be infected
+      set pcolor infected-color ; Visualise the cone in which other people can be infected by the given host
       ask uninfected-here [
         if (immunity < (infectiousness-per-patch * ((modifier * 0.9) + 0.1))) [
           infect self ticks
@@ -137,6 +148,7 @@ to infect-people [host]
   ]
 end
 
+; Sets the breed and other various properties of a turtle to be that of an infected person.
 to infect [target t]
   ask target [
     set breed infected
@@ -149,6 +161,26 @@ to infect [target t]
   ]
 end
 
+; Moves a person forward, randomly changing direction and steering away from the edges.
+to move-person [person]
+  ask person [
+    let distance-to-edge (get-distance-to-edge self)
+    let degree-multiplier 0
+    if distance-to-edge > 0 [set degree-multiplier 1 / distance-to-edge]
+
+    if ticks mod (1 + random direction-change-tick) = 0
+      [set heading heading + (random-exponential random-direction-angle)]
+
+    ifelse (relative-heading self) < 0
+      [set heading (heading - (359 - heading) * degree-multiplier)]
+      [set heading (heading + (heading - 1) * degree-multiplier)]
+
+    forward person-step-size
+  ]
+end
+
+; Reports the value by which the heading, from the centre patch to the given person, has to be rotated.
+; This is negative when a turtle should turn left and +ve when the turtle should turn right, when approaching an edge.
 to-report relative-heading [person]
   let dir 0
   ask centre-patch
@@ -156,6 +188,7 @@ to-report relative-heading [person]
   report dir
 end
 
+; Reports the distance from the given person to the edge of the view, in patches.
 to-report get-distance-to-edge [person]
   let d movement-boundary-lookahead-size
   let distance-to-edge 0
@@ -163,9 +196,9 @@ to-report get-distance-to-edge [person]
   while [d > 0] [
     ask person [
       ifelse patch-ahead d = nobody
-        [ set distance-to-edge d
-          set d 0 ]
-        [ set d (d - person-step-size) ]
+        [set distance-to-edge d
+         set d 0]
+        [set d (d - person-step-size)]
     ]
   ]
 
@@ -259,7 +292,7 @@ GRAPHICS-WINDOW
 1
 1
 ticks
-80.0
+60.0
 
 SLIDER
 6
@@ -270,7 +303,7 @@ number-of-uninfected
 number-of-uninfected
 100
 3000
-1513.0
+1395.0
 1
 1
 NIL
@@ -356,7 +389,7 @@ average-windspeed
 average-windspeed
 0
 103
-0.0
+103.0
 1
 1
 m/s
@@ -371,7 +404,7 @@ air-temperature
 air-temperature
 0
 40
-5.0
+40.0
 1
 1
 °C
@@ -386,7 +419,7 @@ relative-humidity
 relative-humidity
 0
 100
-0.0
+100.0
 1
 1
 %
@@ -401,7 +434,7 @@ sunshine-duration
 sunshine-duration
 53
 335
-53.0
+335.0
 1
 1
 Hours
@@ -433,7 +466,7 @@ Infection Rate
 0.0
 10.0
 0.0
-10.0
+0.0
 true
 false
 "" ""
@@ -469,6 +502,59 @@ MONITOR
 552
 infectiousness
 (normalise-infectiousness-per-patch 30) * (((((normalise-air-temperature + normalise-rainfall + normalise-relative-humidity) / 3)) * 0.9) + 0.1)
+17
+1
+11
+
+MONITOR
+1219
+207
+1365
+252
+NIL
+average-immunity
+17
+1
+11
+
+MONITOR
+1219
+261
+1365
+306
+NIL
+lowest-immunity
+17
+1
+11
+
+PLOT
+967
+196
+1212
+372
+Immunity
+Time
+Immunity
+0.0
+0.0
+0.0
+1.0
+true
+true
+"" ""
+PENS
+"average" 1.0 0 -16777216 true "" "plot average-immunity"
+"min" 1.0 0 -7500403 true "" "plot lowest-immunity"
+"max" 1.0 0 -2674135 true "" "plot highest-immunity"
+
+MONITOR
+1219
+316
+1365
+361
+NIL
+highest-immunity
 17
 1
 11
@@ -815,7 +901,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.0.1
+NetLogo 6.1.1
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
