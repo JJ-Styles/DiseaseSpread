@@ -26,6 +26,19 @@ globals [
   droplet-infectiousness ; Infectiousness of a droplet is probability that that one droplet would infect.
   gravitational-acceleration
   patch-to-metres
+  vit-d-standard-deviation
+  base-immunity
+  max-cough-interval
+  max-sneeze-interval
+  average-male-height
+  average-female-height
+  height-standard-deviation
+  max-cough-droplets
+  max-sneeze-droplets
+  incubation-period
+  average-cough-velocity
+  average-sneeze-velocity
+  droplets-from-talking
 ]
 
 to setup-globals
@@ -40,6 +53,19 @@ to setup-globals
   set gravitational-acceleration 9.81
   set patch-to-metres 2
   set droplet-infectiousness 0.1
+  set vit-d-standard-deviation 0.1
+  set base-immunity 0.1
+  set max-cough-interval 60
+  set max-sneeze-interval 169
+  set average-male-height 176
+  set average-female-height 163
+  set height-standard-deviation 10
+  set max-cough-droplets 300
+  set max-sneeze-droplets 400
+  set incubation-period 20
+  set average-cough-velocity 5
+  set average-sneeze-velocity 4.5
+  set droplets-from-talking 50 ; the number of droplets expelled from the mouth when breathing and talking; produces a very low droplet count just infront of them
 end
 
 to setup
@@ -51,8 +77,8 @@ to setup
     setxy random-xcor random-ycor
     set color uninfected-color
     set shape "person"
-    let s abs (random-normal (sun / 2) 0.1)
-    set immunity 0.1 + (s * 0.3) + (random-float 0.4); Models deficiency of vitamin D. Randomness accounts for other factors like HIV, smoking
+    let vit-d-serum abs (random-normal (sun / 2) vit-d-standard-deviation)
+    set immunity base-immunity + (vit-d-serum * 0.3) + (random-float 0.4) ; Models deficiency of vitamin D. Randomness accounts for other factors like HIV, smoking
   ]
   create-infected number-of-infected [
     setxy random-xcor random-ycor
@@ -75,15 +101,13 @@ to go
       [
         if ticks = sneeze-tick [
           sneeze self
-          set sneeze-tick (ticks + random 7200)
         ]
 
         if ticks = cough-tick [
           cough self
-          set cough-tick (ticks + random 2618)
         ]
 
-        ifelse ticks-since-infected >= 5
+        ifelse ticks-since-infected >= incubation-period
           [infect-people self]
           [set ticks-since-infected (ticks-since-infected + 1)]
 
@@ -96,46 +120,21 @@ to go
   tick
 end
 
-to-report average-immunity
-  let ai 0
-
-  ask uninfected [
-    set ai (ai + immunity)
-  ]
-
-  report ai / (count uninfected)
-end
-
-to-report lowest-immunity
-  let li 1.1
-  ask uninfected [
-    if immunity < li [set li immunity]
-  ]
-  report li
-end
-
-to-report highest-immunity
-  let hi -1
-  ask uninfected [
-    if immunity > hi [set hi immunity]
-  ]
-  report hi
-end
-
 ;
 to infect-people [host]
   ask host [
     let modifier (normalise-air-temperature + normalise-rainfall + normalise-relative-humidity) / 3
 
     let patches-in-radius patches in-cone (infection-distance self) infection-cone-angle ; Range between 1 and 7
-    let num-droplets-per-patch 50 ; Default value for talking and breathing; produces a very low droplet count just infront of them
     let num-patches count patches-in-radius
     if (num-patches = 0) [set num-patches 1]
+
+    let num-droplets-per-patch droplets-from-talking
     if (num-droplets != 0) [set num-droplets-per-patch (num-droplets / num-patches)]
 
     let infectiousness-per-patch normalise-infectiousness-per-patch (num-droplets-per-patch * droplet-infectiousness)
 
-    let infection-color (floor (10 + (infectiousness-per-patch * 5)))
+    let infection-color (floor ((infected-color - 5) + (infectiousness-per-patch * 5)))
 
     ask patches-in-radius [
       set pcolor infected-color ; Visualise the cone in which other people can be infected by the given host
@@ -154,9 +153,10 @@ to infect [target t]
     set breed infected
     set shape "person"
     set color infected-color
-    set height (163 + random-float 13.51) / 100 ;allows for different heights of a person
-    set sneeze-tick (t + random 169) ;average person sneezes roughly 4 times a day, a person with tb is more likely to sneeze
-    set cough-tick (t + random 60) ;average person coughs roughly 11 times a day, a person with tb is more likely to cough
+    set height (random-normal (average-male-height + (average-male-height - average-female-height) / 2) height-standard-deviation) / 100
+    show height
+    set sneeze-tick (t + random max-sneeze-interval) ;average person sneezes roughly 4 times a day, a person with tb is more likely to sneeze
+    set cough-tick (t + random max-cough-interval) ;average person coughs roughly 11 times a day, a person with tb is more likely to cough
     set ticks-since-infected 0
   ]
 end
@@ -206,21 +206,26 @@ to-report get-distance-to-edge [person]
 end
 
 to sneeze [person]
-  if ticks-since-infected >= 5
+  set sneeze-tick (ticks + random max-sneeze-interval)
+  if ticks-since-infected >= incubation-period
   [
-    set num-droplets (300 + random 300)
-    set projectile-velocity 4.5
+    set num-droplets (max-sneeze-droplets + random max-sneeze-droplets)
+    set projectile-velocity average-sneeze-velocity
   ]
 end
 
 to cough [person]
-  if ticks-since-infected >= 5
+  set cough-tick (ticks + random max-cough-interval)
+  if ticks-since-infected >= incubation-period
   [
-    set num-droplets (400 + random 200)
-    set projectile-velocity 5
+    set num-droplets (max-cough-droplets + random max-cough-droplets)
+    set projectile-velocity average-cough-velocity
   ]
 end
 
+; Reports the distance that the disease travels from the given person.
+; Treat diseased droplets as projectiles and calculate the distance
+; using projectile motion formulas, taking into account windspeed.
 to-report infection-distance [person]
   let h [height] of person
   let v [projectile-velocity] of person
@@ -235,12 +240,14 @@ to-report infection-distance [person]
   report ceiling (d / patch-to-metres)
 end
 
+; Reports the scaled down sunshine hours, a floating-point number between 0 and 1
 to-report normalise-sunshine-duration
-  let x sunshine-duration - 53
-  let y x / (335 - 53)
+  let x sunshine-duration - 53 ; 53 - min sunshine
+  let y x / (335 - 53) ; 335 - max sunshine
   report y
 end
 
+; Essentially the ratio of infected people to uninfected people.
 to-report get-infection-rate
   let num-infected count turtles with [breed = infected]
   let num-uninfected count turtles with [breed = uninfected]
@@ -254,17 +261,41 @@ to-report normalise-infectiousness-per-patch [x]
   report y
 end
 
-to-report normalise-rainfall
-  report 1 - (rainfall / 365)
-end
-
 to-report normalise-air-temperature
   let y (-1 / 25) * ((air-temperature - 5) ^ 2) + 50
   report y / 50
 end
 
+to-report normalise-rainfall
+  report 1 - (rainfall / 365)
+end
+
 to-report normalise-relative-humidity
   report 1 - (relative-humidity / 100)
+end
+
+to-report average-immunity
+  let ai 0
+  ask uninfected [
+    set ai (ai + immunity)
+  ]
+  report ai / (count uninfected)
+end
+
+to-report lowest-immunity
+  let li 1.1
+  ask uninfected [
+    if immunity < li [set li immunity]
+  ]
+  report li
+end
+
+to-report highest-immunity
+  let hi -1
+  ask uninfected [
+    if immunity > hi [set hi immunity]
+  ]
+  report hi
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -404,7 +435,7 @@ air-temperature
 air-temperature
 0
 40
-40.0
+6.0
 1
 1
 °C
@@ -434,7 +465,7 @@ sunshine-duration
 sunshine-duration
 53
 335
-335.0
+185.0
 1
 1
 Hours
