@@ -1,8 +1,8 @@
 breed [infected infected-person]
 breed [uninfected uninfected-person]
+breed [passive-infected passive-infected-person]
 
 infected-own [
-  ticks-since-infected
   projectile-velocity
   height
   sneeze-tick
@@ -14,10 +14,15 @@ uninfected-own [
   immunity
 ]
 
+passive-infected-own [
+  ticks-since-infected
+]
+
 globals [
   centre-patch
   infected-color
   uninfected-color
+  passive-infected-color
   random-direction-angle
   direction-change-tick
   person-step-size
@@ -45,6 +50,7 @@ to setup-globals
   set centre-patch patch (max-pxcor / 2) (max-pycor / 2)
   set infected-color red
   set uninfected-color blue
+  set passive-infected-color yellow
   set random-direction-angle 45
   set direction-change-tick 100
   set person-step-size 0.1
@@ -59,7 +65,7 @@ to setup-globals
   set max-sneeze-interval 169
   set average-male-height 176
   set average-female-height 163
-  set height-standard-deviation 10
+  set height-standard-deviation 5
   set max-cough-droplets 300
   set max-sneeze-droplets 400
   set incubation-period 20
@@ -96,23 +102,26 @@ end
 ; every 2618 ticks you cough.
 to go
   ask patches [set pcolor black]
+
+  ask passive-infected [
+    ifelse ticks-since-infected >= incubation-period
+      [infect self ticks]
+      [set ticks-since-infected (ticks-since-infected + 1)]
+  ]
+
   ask turtles [
-    if (breed = infected)
-      [
-        if ticks = sneeze-tick [
-          sneeze self
-        ]
+    if (breed = infected) [
+      if ticks = sneeze-tick [
+        sneeze self
+      ]
 
-        if ticks = cough-tick [
-          cough self
-        ]
+      if ticks = cough-tick [
+        cough self
+      ]
 
-        ifelse ticks-since-infected >= incubation-period
-          [infect-people self]
-          [set ticks-since-infected (ticks-since-infected + 1)]
-
-        set num-droplets 0
-        set projectile-velocity 0
+      transmit-disease self
+      set num-droplets 0
+      set projectile-velocity 0
     ]
     move-person self
   ]
@@ -120,45 +129,45 @@ to go
   tick
 end
 
-;
-to infect-people [host]
-  ask host [
-    let modifier (normalise-air-temperature + normalise-rainfall + normalise-relative-humidity) / 3
+; For the given infected host, transmit the disease to those in the area.
+to transmit-disease [host]
+  let modifier (normalise-air-temperature + normalise-rainfall + normalise-relative-humidity) / 3
 
-    let patches-in-radius patches in-cone (infection-distance self) infection-cone-angle ; Range between 1 and 7
-    let num-patches count patches-in-radius
-    if (num-patches = 0) [set num-patches 1]
+  let patches-in-radius patches in-cone (infection-distance self) infection-cone-angle ; Range between 1 and 7
+  let num-patches count patches-in-radius
+  if (num-patches = 0) [set num-patches 1]
 
-    let num-droplets-per-patch droplets-from-talking
-    if (num-droplets != 0) [set num-droplets-per-patch (num-droplets / num-patches)]
+  let num-droplets-per-patch droplets-from-talking
+  if (num-droplets != 0) [set num-droplets-per-patch (num-droplets / num-patches)]
 
-    let infectiousness-per-patch normalise-infectiousness-per-patch (num-droplets-per-patch * droplet-infectiousness)
+  let infectiousness-per-patch normalise-infectiousness-per-patch (num-droplets-per-patch * droplet-infectiousness)
 
-    let infection-color (floor ((infected-color - 5) + (infectiousness-per-patch * 5)))
-
-    ask patches-in-radius [
-      set pcolor infected-color ; Visualise the cone in which other people can be infected by the given host
-      ask uninfected-here [
-        if (immunity < (infectiousness-per-patch * ((modifier * 0.9) + 0.1))) [
-          infect self ticks
-        ]
+  ask patches-in-radius [
+    set pcolor floor ((infected-color - 4) + infectiousness-per-patch * 4) ; Visualise the cone in which other people can be infected by the given host
+    ask uninfected-here [
+      if (immunity < (infectiousness-per-patch * ((modifier * 0.9) + 0.1))) [
+        transmit self
       ]
     ]
   ]
 end
 
+; Sets the breed of the given target to passively infected.
+to transmit [target]
+  set breed passive-infected
+  set shape "person"
+  set color passive-infected-color
+  set ticks-since-infected 0
+end
+
 ; Sets the breed and other various properties of a turtle to be that of an infected person.
 to infect [target t]
-  ask target [
-    set breed infected
-    set shape "person"
-    set color infected-color
-    set height (random-normal (average-male-height + (average-male-height - average-female-height) / 2) height-standard-deviation) / 100
-    show height
-    set sneeze-tick (t + random max-sneeze-interval) ;average person sneezes roughly 4 times a day, a person with tb is more likely to sneeze
-    set cough-tick (t + random max-cough-interval) ;average person coughs roughly 11 times a day, a person with tb is more likely to cough
-    set ticks-since-infected 0
-  ]
+  set breed infected
+  set shape "person"
+  set color infected-color
+  set height (random-normal (average-male-height + (average-male-height - average-female-height) / 2) height-standard-deviation) / 100
+  set sneeze-tick (t + random max-sneeze-interval) ;average person sneezes roughly 4 times a day, a person with tb is more likely to sneeze
+  set cough-tick (t + random max-cough-interval) ;average person coughs roughly 11 times a day, a person with tb is more likely to cough
 end
 
 ; Moves a person forward, randomly changing direction and steering away from the edges.
@@ -171,7 +180,7 @@ to move-person [person]
     if ticks mod (1 + random direction-change-tick) = 0
       [set heading heading + (random-exponential random-direction-angle)]
 
-    ifelse (relative-heading self) < 0
+    ifelse (relative-heading self) < 0 ; -ve if should turn left +ve if should turn right
       [set heading (heading - (359 - heading) * degree-multiplier)]
       [set heading (heading + (heading - 1) * degree-multiplier)]
 
@@ -207,20 +216,14 @@ end
 
 to sneeze [person]
   set sneeze-tick (ticks + random max-sneeze-interval)
-  if ticks-since-infected >= incubation-period
-  [
-    set num-droplets (max-sneeze-droplets + random max-sneeze-droplets)
-    set projectile-velocity average-sneeze-velocity
-  ]
+  set num-droplets (max-sneeze-droplets + random max-sneeze-droplets)
+  set projectile-velocity average-sneeze-velocity
 end
 
 to cough [person]
   set cough-tick (ticks + random max-cough-interval)
-  if ticks-since-infected >= incubation-period
-  [
-    set num-droplets (max-cough-droplets + random max-cough-droplets)
-    set projectile-velocity average-cough-velocity
-  ]
+  set num-droplets (max-cough-droplets + random max-cough-droplets)
+  set projectile-velocity average-cough-velocity
 end
 
 ; Reports the distance that the disease travels from the given person.
@@ -256,14 +259,11 @@ to-report get-infection-rate
 end
 
 to-report normalise-infectiousness-per-patch [x]
-  let y x
-  set y ((-1 / 900) * ((x - 30) ^ 2) + 1)
-  report y
+  report ((-1 / 900) * ((x - 30) ^ 2) + 1)
 end
 
 to-report normalise-air-temperature
-  let y (-1 / 25) * ((air-temperature - 5) ^ 2) + 50
-  report y / 50
+  report ((-1 / 25) * ((air-temperature - 5) ^ 2) + 50) / 50
 end
 
 to-report normalise-rainfall
@@ -274,7 +274,7 @@ to-report normalise-relative-humidity
   report 1 - (relative-humidity / 100)
 end
 
-to-report average-immunity
+to-report mean-immunity
   let ai 0
   ask uninfected [
     set ai (ai + immunity)
@@ -296,6 +296,13 @@ to-report highest-immunity
     if immunity > hi [set hi immunity]
   ]
   report hi
+end
+
+to-report immunity-standard-deviation
+  let m mean-immunity
+  let immunities [immunity] of uninfected
+  let s reduce + (map [i -> (i - m) ^ 2] immunities)
+  report sqrt (s / (count uninfected))
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -390,23 +397,23 @@ NIL
 HORIZONTAL
 
 MONITOR
-9
-327
-69
-372
+8
+333
+68
+378
 Infected
-count turtles with [breed = infected]
+count infected
 17
 1
 11
 
 MONITOR
-89
-327
-162
-372
+72
+334
+143
+379
 Uninfected
-count turtles with [breed = uninfected]
+count uninfected
 17
 1
 11
@@ -420,7 +427,7 @@ average-windspeed
 average-windspeed
 0
 103
-103.0
+0.0
 1
 1
 m/s
@@ -435,7 +442,7 @@ air-temperature
 air-temperature
 0
 40
-6.0
+0.0
 1
 1
 °C
@@ -450,7 +457,7 @@ relative-humidity
 relative-humidity
 0
 100
-100.0
+0.0
 1
 1
 %
@@ -465,7 +472,7 @@ sunshine-duration
 sunshine-duration
 53
 335
-185.0
+53.0
 1
 1
 Hours
@@ -518,7 +525,7 @@ normalise-infectiousness-per-patch 2.5
 MONITOR
 13
 444
-71
+159
 489
 modifier
 ((((normalise-air-temperature + normalise-rainfall + normalise-relative-humidity) / 3)) * 0.9) + 0.1
@@ -538,21 +545,21 @@ infectiousness
 11
 
 MONITOR
-1219
-207
-1365
-252
+1221
+269
+1367
+314
 NIL
-average-immunity
+mean-immunity
 17
 1
 11
 
 MONITOR
-1219
-261
-1365
-306
+1221
+323
+1367
+368
 NIL
 lowest-immunity
 17
@@ -560,10 +567,10 @@ lowest-immunity
 11
 
 PLOT
-967
-196
-1212
-372
+968
+232
+1213
+408
 Immunity
 Time
 Immunity
@@ -575,17 +582,39 @@ true
 true
 "" ""
 PENS
-"average" 1.0 0 -16777216 true "" "plot average-immunity"
+"mean" 1.0 0 -16777216 true "" "plot mean-immunity"
 "min" 1.0 0 -7500403 true "" "plot lowest-immunity"
 "max" 1.0 0 -2674135 true "" "plot highest-immunity"
 
 MONITOR
-1219
-316
-1365
-361
+1221
+378
+1367
+423
 NIL
 highest-immunity
+17
+1
+11
+
+MONITOR
+1221
+216
+1366
+261
+NIL
+immunity-standard-deviation
+17
+1
+11
+
+MONITOR
+147
+334
+217
+379
+Passively-Infected
+count passive-infected
 17
 1
 11
