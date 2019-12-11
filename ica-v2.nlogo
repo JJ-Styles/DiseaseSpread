@@ -140,18 +140,18 @@ to transmit-disease [host]
   if (num-patches = 0) [set num-patches 1]
 
   let num-droplets-per-patch droplets-from-talking
-  if (num-droplets != 0) [set num-droplets-per-patch (num-droplets / num-patches)]
+  if (num-droplets != 0) [set num-droplets-per-patch ((num-droplets * (modifier * 0.9 + 0.1)) / num-patches)]
 
-  let infectiousness-per-patch normalise-infectiousness-per-patch (num-droplets-per-patch * droplet-infectiousness)
+  let infectiousness-per-patch normalise-infectiousness-per-patch (num-droplets-per-patch)
 
   ask patches-in-radius [
     set pcolor floor ((infected-color - 4) + infectiousness-per-patch * 4) ; Visualise the cone in which other people can be infected by the given host
     ask uninfected-here [
-      let p infectiousness-per-patch * (modifier * 0.9 + 0.1)
+      let p infectiousness-per-patch ;* (modifier * 0.9 + 0.1)
       if (p < 0) [
         show num-droplets-per-patch * droplet-infectiousness
       ]
-      set averages (lput p averages)
+      if (num-droplets-per-patch != droplets-from-talking) [set averages (lput p averages)]
       if (immunity < p) [
         transmit self
       ]
@@ -266,7 +266,8 @@ to-report get-infection-rate
 end
 
 to-report normalise-infectiousness-per-patch [x]
-  report ((-1 / 900) * ((x - 30) ^ 2) + 1)
+  report (ifelse-value ((1 / 40) * x > 1) [1]
+  [(1 / 40) * x])
 end
 
 to-report normalise-air-temperature
@@ -321,6 +322,15 @@ to-report probs-standard-deviation
   let s reduce + (map [i -> (i - m) ^ 2] averages)
   report sqrt (s / (length averages))
 end
+
+to-report test
+  let modifier (normalise-air-temperature + normalise-rainfall + normalise-relative-humidity) / 3
+  let num-droplets-test 300
+  ask one-of infected [set projectile-velocity average-sneeze-velocity]
+  let d infection-distance (one-of infected)
+  let num-droplets-per-patch  ((num-droplets-test * (modifier * 0.9 + 0.1)) / d)
+ report normalise-infectiousness-per-patch (num-droplets-per-patch)
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 227
@@ -358,7 +368,7 @@ number-of-uninfected
 number-of-uninfected
 100
 3000
-1395.0
+3000.0
 1
 1
 NIL
@@ -444,7 +454,7 @@ average-windspeed
 average-windspeed
 0
 103
-0.0
+103.0
 1
 1
 m/s
@@ -459,7 +469,7 @@ air-temperature
 air-temperature
 0
 40
-40.0
+5.0
 1
 1
 °C
@@ -504,7 +514,7 @@ rainfall
 rainfall
 1
 365
-365.0
+1.0
 1
 1
 Days
@@ -530,33 +540,11 @@ PENS
 
 MONITOR
 12
-391
-175
-436
-infectiousness of breathing
-normalise-infectiousness-per-patch 2.5
-17
-1
-11
-
-MONITOR
-13
-444
-159
-489
-modifier
-((((normalise-air-temperature + normalise-rainfall + normalise-relative-humidity) / 3)) * 0.9) + 0.1
-17
-1
-11
-
-MONITOR
-15
-507
-99
-552
+400
+106
+445
 infectiousness
-(normalise-infectiousness-per-patch 30) * (((((normalise-air-temperature + normalise-rainfall + normalise-relative-humidity) / 3)) * 0.9) + 0.1)
+test
 17
 1
 11
