@@ -19,6 +19,7 @@ passive-infected-own [
 ]
 
 globals [
+  averages
   centre-patch
   infected-color
   uninfected-color
@@ -47,6 +48,7 @@ globals [
 ]
 
 to setup-globals
+  set averages []
   set centre-patch patch (max-pxcor / 2) (max-pycor / 2)
   set infected-color red
   set uninfected-color blue
@@ -145,7 +147,9 @@ to transmit-disease [host]
   ask patches-in-radius [
     set pcolor floor ((infected-color - 4) + infectiousness-per-patch * 4) ; Visualise the cone in which other people can be infected by the given host
     ask uninfected-here [
-      if (immunity < (infectiousness-per-patch * ((modifier * 0.9) + 0.1))) [
+      let p infectiousness-per-patch * (modifier * 0.9 + 0.1)
+      set averages (lput p averages)
+      if (immunity < p) [
         transmit self
       ]
     ]
@@ -303,6 +307,16 @@ to-report immunity-standard-deviation
   let immunities [immunity] of uninfected
   let s reduce + (map [i -> (i - m) ^ 2] immunities)
   report sqrt (s / (count uninfected))
+end
+
+to-report mean-probs
+  report (reduce + averages) / (length averages)
+end
+
+to-report probs-standard-deviation
+  let m mean-probs
+  let s reduce + (map [i -> (i - m) ^ 2] averages)
+  report sqrt (s / (length averages))
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -615,6 +629,68 @@ MONITOR
 379
 Passively-Infected
 count passive-infected
+17
+1
+11
+
+MONITOR
+1222
+439
+1369
+484
+NIL
+mean-probs
+17
+1
+11
+
+PLOT
+966
+459
+1212
+635
+Probability
+NIL
+NIL
+0.0
+0.0
+0.0
+1.0
+true
+false
+"" ""
+PENS
+"mean-p" 1.0 0 -16777216 true "" "plot mean-probs"
+
+MONITOR
+1223
+492
+1370
+537
+NIL
+min averages
+17
+1
+11
+
+MONITOR
+1223
+545
+1369
+590
+NIL
+max averages
+17
+1
+11
+
+MONITOR
+1223
+598
+1370
+643
+NIL
+probs-standard-deviation
 17
 1
 11
