@@ -113,26 +113,25 @@ to go
     ]
     move-person self
   ]
-  if not any? uninfected [ stop ]
+  if not any? uninfected and not any? passive-infected [ stop ]
   tick
 end
 
 ; For the given infected host, transmit the disease to those in the area.
 to transmit-disease [host]
-  let modifier (normalise-air-temperature + normalise-rainfall + normalise-relative-humidity) / 3
+  let modifier (ventilation + normalise-air-temperature + normalise-rainfall + normalise-relative-humidity) / 4
 
   let patches-in-cone patches in-cone infection-range infection-cone-angle ; Range between 1 and 7
   let r infection-range
 
   ask patches-in-cone [
     let dist-from-host (distance host)
-    let m (r / (ceiling dist-from-host)) * 0.25
-    if m > 1 [show m]
+    let m (r / (ceiling dist-from-host)) * 0.2
     set pcolor (scale-color infected-color dist-from-host r (r * -1) + 1)
     ask uninfected-here [
-      let p m
+      let p m * (modifier + 0.2)
       set averages (lput p averages)
-      if (immunity < m) [; adjust this
+      if (immunity < m) [
         transmit self
       ]
     ]
@@ -201,12 +200,12 @@ to-report get-distance-to-edge [person]
 end
 
 to sneeze [person]
-  set infection-range 3
+  set infection-range 4
   set sneeze-tick (ticks + random max-sneeze-interval)
 end
 
 to cough [person]
-  set infection-range 2
+  set infection-range 3
   set cough-tick (ticks + random max-cough-interval)
 end
 
@@ -318,7 +317,7 @@ number-of-uninfected
 number-of-uninfected
 100
 3000
-1145.0
+3000.0
 1
 1
 NIL
@@ -367,7 +366,7 @@ number-of-infected
 number-of-infected
 1
 10
-10.0
+1.0
 1
 1
 NIL
@@ -400,14 +399,14 @@ SLIDER
 93
 219
 126
-average-windspeed
-average-windspeed
+ventilation
+ventilation
 0
-103
+1
 0.0
+0.01
 1
-1
-m/s
+NIL
 HORIZONTAL
 
 SLIDER
@@ -419,7 +418,7 @@ air-temperature
 air-temperature
 0
 40
-40.0
+0.0
 1
 1
 °C
@@ -434,7 +433,7 @@ relative-humidity
 relative-humidity
 0
 100
-100.0
+0.0
 1
 1
 %
@@ -464,7 +463,7 @@ rainfall
 rainfall
 1
 365
-365.0
+1.0
 1
 1
 Days
@@ -1037,7 +1036,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.1.1
+NetLogo 6.0.1
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
