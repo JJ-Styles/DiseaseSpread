@@ -221,7 +221,7 @@ to-report get-infection-rate
   let num-infected count turtles with [breed = infected]
   let num-uninfected count turtles with [breed = uninfected]
 
-  report (num-infected / num-uninfected) * 100
+  report (num-infected / num-uninfected)
 end
 
 to-report normalise-infectiousness-per-patch [x]
@@ -317,7 +317,7 @@ number-of-uninfected
 number-of-uninfected
 100
 3000
-3000.0
+1528.0
 1
 1
 NIL
@@ -403,7 +403,7 @@ ventilation
 ventilation
 0
 1
-0.0
+0.5
 0.01
 1
 NIL
@@ -418,7 +418,7 @@ air-temperature
 air-temperature
 0
 40
-0.0
+25.0
 1
 1
 °C
@@ -433,7 +433,7 @@ relative-humidity
 relative-humidity
 0
 100
-0.0
+50.0
 1
 1
 %
@@ -448,7 +448,7 @@ sunshine-duration
 sunshine-duration
 53
 335
-53.0
+194.0
 1
 1
 Hours
@@ -463,7 +463,7 @@ rainfall
 rainfall
 1
 365
-1.0
+183.0
 1
 1
 Days
@@ -486,39 +486,6 @@ false
 "" ""
 PENS
 "uninfected" 1.0 0 -13345367 true "" "plot count infected"
-
-MONITOR
-12
-391
-175
-436
-infectiousness of breathing
-normalise-infectiousness-per-patch 2.5
-17
-1
-11
-
-MONITOR
-13
-444
-159
-489
-modifier
-((((normalise-air-temperature + normalise-rainfall + normalise-relative-humidity) / 3)) * 0.9) + 0.1
-17
-1
-11
-
-MONITOR
-15
-507
-99
-552
-infectiousness
-(normalise-infectiousness-per-patch 30) * (((((normalise-air-temperature + normalise-rainfall + normalise-relative-humidity) / 3)) * 0.9) + 0.1)
-17
-1
-11
 
 MONITOR
 966
@@ -657,39 +624,6 @@ MONITOR
 628
 NIL
 probs-standard-deviation
-17
-1
-11
-
-MONITOR
-12
-576
-199
-621
-NIL
-normalise-air-temperature
-17
-1
-11
-
-MONITOR
-12
-666
-140
-711
-NIL
-normalise-rainfall
-17
-1
-11
-
-MONITOR
-12
-621
-204
-666
-NIL
-normalise-relative-humidity
 17
 1
 11
@@ -1040,6 +974,56 @@ NetLogo 6.0.1
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
+<experiments>
+  <experiment name="effect on population desnity - best case" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>get-infection-rate</metric>
+    <enumeratedValueSet variable="number-of-infected">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="number-of-uninfected" first="100" step="100" last="3000"/>
+    <enumeratedValueSet variable="ventilation">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="sunshine-duration">
+      <value value="53"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="relative-humidity">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="air-temperature">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rainfall">
+      <value value="1"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="effect on population desnity - average case" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>get-infection-rate</metric>
+    <enumeratedValueSet variable="number-of-infected">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="number-of-uninfected" first="100" step="100" last="3000"/>
+    <enumeratedValueSet variable="ventilation">
+      <value value="0.5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="sunshine-duration">
+      <value value="194"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="relative-humidity">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="air-temperature">
+      <value value="25"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rainfall">
+      <value value="183"/>
+    </enumeratedValueSet>
+  </experiment>
+</experiments>
 @#$#@#$#@
 @#$#@#$#@
 default
