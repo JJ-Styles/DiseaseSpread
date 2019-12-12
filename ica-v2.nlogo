@@ -96,18 +96,28 @@ to go
 
   ask turtles [
     if (breed = infected) [
-      (ifelse ticks = sneeze-tick [
-        sneeze self
-      ]
-      ticks = cough-tick [
-        cough self
-      ]
-      [talk self])
+      ifelse ticks = sneeze-tick [sneeze self]
+      [ifelse ticks = cough-tick [cough self]
+        [talk self]]
     ]
     move-person self
   ]
   if not any? uninfected and not any? passive-infected [ stop ]
   tick
+end
+
+to sneeze [person]
+  set sneeze-tick (ticks + random max-sneeze-interval)
+  transmit-disease self 0.625 3
+end
+
+to cough [person]
+  set cough-tick (ticks + random max-cough-interval)
+  transmit-disease self 0.35 2
+end
+
+to talk [person]
+  transmit-disease self 0.2 1
 end
 
 ; For the given infected host, transmit the disease to those in the area.
@@ -116,11 +126,11 @@ to transmit-disease [host p d]
 
   let patches-in-radius patches in-cone d infection-cone-angle
   let num-patches count patches-in-radius
+  let new-p p * (modifier * 0.9 + 0.2)
 
   ask patches-in-radius [
-    set pcolor orange
+    set pcolor ((infected-color - 4) + new-p * 4)
     ask uninfected-here [
-      let new-p p * (modifier * 0.9 + 0.2)
       set averages (lput new-p averages)
       if ((immunity - random-float (1 - immunity)) < new-p ) [
         transmit self
@@ -188,20 +198,6 @@ to-report get-distance-to-edge [person]
   ]
 
   report distance-to-edge
-end
-
-to sneeze [person]
-  set sneeze-tick (ticks + random max-sneeze-interval)
-  transmit-disease self 0.625 3
-end
-
-to cough [person]
-  set cough-tick (ticks + random max-cough-interval)
-  transmit-disease self 0.35 2
-end
-
-to talk [person]
-  transmit-disease self 0.2 1
 end
 
 ; Reports the scaled down sunshine hours, a floating-point number between 0 and 1
@@ -277,7 +273,7 @@ to-report probs-standard-deviation
 end
 
 to-report test
-  report ((normalise-air-temperature + normalise-rainfall + normalise-relative-humidity + normalise-ventilation) / 4) * 0.9 + 0.1
+  report ((normalise-air-temperature + normalise-rainfall + normalise-relative-humidity + normalise-ventilation) / 4) * 0.9 + 0.2
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -980,7 +976,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.1.1
+NetLogo 6.0.1
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
