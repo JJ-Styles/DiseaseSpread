@@ -317,7 +317,7 @@ number-of-uninfected
 number-of-uninfected
 100
 3000
-1528.0
+3000.0
 1
 1
 NIL
@@ -403,7 +403,7 @@ ventilation
 ventilation
 0
 1
-0.5
+0.95
 0.01
 1
 NIL
@@ -418,7 +418,7 @@ air-temperature
 air-temperature
 0
 40
-25.0
+5.0
 1
 1
 °C
@@ -433,7 +433,7 @@ relative-humidity
 relative-humidity
 0
 100
-50.0
+0.0
 1
 1
 %
@@ -448,7 +448,7 @@ sunshine-duration
 sunshine-duration
 53
 335
-194.0
+53.0
 1
 1
 Hours
@@ -463,7 +463,7 @@ rainfall
 rainfall
 1
 365
-183.0
+1.0
 1
 1
 Days
@@ -970,7 +970,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.0.1
+NetLogo 6.1.1
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
@@ -1021,6 +1021,150 @@ NetLogo 6.0.1
     </enumeratedValueSet>
     <enumeratedValueSet variable="rainfall">
       <value value="183"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="effect on population desnity - Air Temperature" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>get-infection-rate</metric>
+    <enumeratedValueSet variable="number-of-infected">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-uninfected">
+      <value value="3000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="ventilation">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="sunshine-duration">
+      <value value="53"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="relative-humidity">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="air-temperature" first="0" step="1" last="40"/>
+    <enumeratedValueSet variable="rainfall">
+      <value value="1"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="effect on population desnity - Ventilation" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>get-infection-rate</metric>
+    <enumeratedValueSet variable="number-of-infected">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-uninfected">
+      <value value="3000"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="ventilation" first="0" step="0.05" last="1"/>
+    <enumeratedValueSet variable="sunshine-duration">
+      <value value="53"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="relative-humidity">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="air-temperature">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rainfall">
+      <value value="1"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="effect on population desnity - Sunshine Duration" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>get-infection-rate</metric>
+    <enumeratedValueSet variable="number-of-infected">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-uninfected">
+      <value value="3000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="ventilation">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="sunshine-duration" first="53" step="1" last="335"/>
+    <enumeratedValueSet variable="relative-humidity">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="air-temperature">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rainfall">
+      <value value="1"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="effect on population desnity - Relative Humidity" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>get-infection-rate</metric>
+    <enumeratedValueSet variable="number-of-infected">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-uninfected">
+      <value value="3000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="ventilation">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="sunshine-duration">
+      <value value="53"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="relative-humidity" first="0" step="1" last="100"/>
+    <enumeratedValueSet variable="air-temperature">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rainfall">
+      <value value="1"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="effect on population desnity - Rainfall" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>get-infection-rate</metric>
+    <enumeratedValueSet variable="number-of-infected">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-uninfected">
+      <value value="3000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="ventilation">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="sunshine-duration">
+      <value value="53"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="relative-humidity">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="air-temperature">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="rainfall" first="1" step="1" last="365"/>
+  </experiment>
+  <experiment name="effect on population desnity - worst case" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>get-infection-rate</metric>
+    <enumeratedValueSet variable="number-of-infected">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="number-of-uninfected" first="100" step="100" last="3000"/>
+    <enumeratedValueSet variable="ventilation">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="sunshine-duration">
+      <value value="335"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="relative-humidity">
+      <value value="100"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="air-temperature">
+      <value value="40"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rainfall">
+      <value value="365"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
