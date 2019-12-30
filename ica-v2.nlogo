@@ -1023,7 +1023,7 @@ NetLogo 6.1.1
       <value value="183"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="effect on population desnity - Air Temperature" repetitions="1" runMetricsEveryStep="true">
+  <experiment name="effect on population desnity - Air Temperature" repetitions="6" runMetricsEveryStep="true">
     <setup>setup</setup>
     <go>go</go>
     <metric>get-infection-rate</metric>
@@ -1042,12 +1042,12 @@ NetLogo 6.1.1
     <enumeratedValueSet variable="relative-humidity">
       <value value="0"/>
     </enumeratedValueSet>
-    <steppedValueSet variable="air-temperature" first="0" step="1" last="40"/>
+    <steppedValueSet variable="air-temperature" first="0" step="10" last="40"/>
     <enumeratedValueSet variable="rainfall">
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="effect on population desnity - Ventilation" repetitions="1" runMetricsEveryStep="true">
+  <experiment name="effect on population desnity - Ventilation" repetitions="6" runMetricsEveryStep="true">
     <setup>setup</setup>
     <go>go</go>
     <metric>get-infection-rate</metric>
@@ -1057,7 +1057,7 @@ NetLogo 6.1.1
     <enumeratedValueSet variable="number-of-uninfected">
       <value value="3000"/>
     </enumeratedValueSet>
-    <steppedValueSet variable="ventilation" first="0" step="0.05" last="1"/>
+    <steppedValueSet variable="ventilation" first="0" step="0.25" last="1"/>
     <enumeratedValueSet variable="sunshine-duration">
       <value value="53"/>
     </enumeratedValueSet>
@@ -1071,7 +1071,7 @@ NetLogo 6.1.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="effect on population desnity - Sunshine Duration" repetitions="1" runMetricsEveryStep="true">
+  <experiment name="effect on population desnity - Sunshine Duration" repetitions="6" runMetricsEveryStep="true">
     <setup>setup</setup>
     <go>go</go>
     <metric>get-infection-rate</metric>
@@ -1084,7 +1084,7 @@ NetLogo 6.1.1
     <enumeratedValueSet variable="ventilation">
       <value value="0"/>
     </enumeratedValueSet>
-    <steppedValueSet variable="sunshine-duration" first="53" step="1" last="335"/>
+    <steppedValueSet variable="sunshine-duration" first="53" step="70" last="335"/>
     <enumeratedValueSet variable="relative-humidity">
       <value value="0"/>
     </enumeratedValueSet>
@@ -1095,31 +1095,7 @@ NetLogo 6.1.1
       <value value="1"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="effect on population desnity - Relative Humidity" repetitions="1" runMetricsEveryStep="true">
-    <setup>setup</setup>
-    <go>go</go>
-    <metric>get-infection-rate</metric>
-    <enumeratedValueSet variable="number-of-infected">
-      <value value="1"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="number-of-uninfected">
-      <value value="3000"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="ventilation">
-      <value value="0"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="sunshine-duration">
-      <value value="53"/>
-    </enumeratedValueSet>
-    <steppedValueSet variable="relative-humidity" first="0" step="1" last="100"/>
-    <enumeratedValueSet variable="air-temperature">
-      <value value="5"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="rainfall">
-      <value value="1"/>
-    </enumeratedValueSet>
-  </experiment>
-  <experiment name="effect on population desnity - Rainfall" repetitions="1" runMetricsEveryStep="true">
+  <experiment name="effect on population desnity - Relative Humidity" repetitions="6" runMetricsEveryStep="true">
     <setup>setup</setup>
     <go>go</go>
     <metric>get-infection-rate</metric>
@@ -1135,13 +1111,37 @@ NetLogo 6.1.1
     <enumeratedValueSet variable="sunshine-duration">
       <value value="53"/>
     </enumeratedValueSet>
+    <steppedValueSet variable="relative-humidity" first="0" step="25" last="100"/>
+    <enumeratedValueSet variable="air-temperature">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="rainfall">
+      <value value="1"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="effect on population desnity - Rainfall" repetitions="6" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>get-infection-rate</metric>
+    <enumeratedValueSet variable="number-of-infected">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-uninfected">
+      <value value="3000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="ventilation">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="sunshine-duration">
+      <value value="53"/>
+    </enumeratedValueSet>
     <enumeratedValueSet variable="relative-humidity">
       <value value="0"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="air-temperature">
       <value value="5"/>
     </enumeratedValueSet>
-    <steppedValueSet variable="rainfall" first="1" step="1" last="365"/>
+    <steppedValueSet variable="rainfall" first="1" step="91" last="365"/>
   </experiment>
   <experiment name="effect on population desnity - worst case" repetitions="1" runMetricsEveryStep="true">
     <setup>setup</setup>
