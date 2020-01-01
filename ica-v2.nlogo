@@ -119,19 +119,19 @@ end
 
 ; For the given infected host, transmit the disease to those in the area.
 to transmit-disease [host]
-  let modifier (ventilation + normalise-air-temperature + normalise-rainfall + normalise-relative-humidity) / 4
+  let modifier ((1 - ventilation) + normalise-air-temperature + normalise-rainfall + normalise-relative-humidity) / 4
 
   let patches-in-cone patches in-cone infection-range infection-cone-angle ; Range between 1 and 7
   let r infection-range
 
   ask patches-in-cone [
     let dist-from-host (distance host)
-    let m (r / (ceiling dist-from-host)) * 0.2
+    let patch-infectiousness (r / (ceiling dist-from-host)) * 0.2
     set pcolor (scale-color infected-color dist-from-host r (r * -1) + 1)
     ask uninfected-here [
-      let p m * (modifier + 0.2)
+      let p (patch-infectiousness * 0.50) + (modifier * 0.25) + (random-float 0.25)
       set averages (lput p averages)
-      if (immunity < m) [
+      if (immunity < p) [
         transmit self
       ]
     ]
